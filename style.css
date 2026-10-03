@@ -256,7 +256,7 @@ body.staff .staff-badge { display: inline-block; }
 
 /* ---------- 직원 모드 ---------- */
 .sheet.narrow { max-width: 400px; }
-.pin { display: block; width: 100%; height: 72px; margin-top: 24px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--soft); text-align: center; font: 700 32px var(--mono); letter-spacing: .5em; outline: none; -webkit-user-select: text; user-select: text; }
+.pin { display: block; width: 100%; height: 72px; margin-top: 24px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--soft); text-align: center; font: 700 32px var(--mono); letter-spacing: .35em; outline: none; -webkit-user-select: text; user-select: text; }
 .pin:focus { border-color: var(--ink); background: #fff; }
 .pin + .btn { margin-top: 12px; }
 .staff-stats { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-top: 24px; }
