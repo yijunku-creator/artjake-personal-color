@@ -3,7 +3,7 @@
 // 설정 방법: 같은 폴더의 설정방법.md
 
 // 앱의 config.js MAIL_KEY와 같은 값으로 바꿔주세요.
-const KEY = 'artjake-color-change-me';
+const KEY = 'artjake-color-change-me'; // 실제 값은 Apps Script 쪽과 config.js에만 둠
 const SENDER_NAME = '아트제이크 퍼스널컬러';
 
 function doPost(e) {
