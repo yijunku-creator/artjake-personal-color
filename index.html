@@ -22,7 +22,7 @@
   <!-- 시작 -->
   <section id="start" class="screen active">
     <header class="topbar center">
-      <div class="brand"><span class="logo"></span>ARTJAKE <em>Color</em></div>
+      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span><span class="staff-badge">직원 모드</span></button>
     </header>
     <div class="start">
       <div class="orbit" aria-hidden="true">
@@ -62,7 +62,7 @@
   <!-- 카메라 -->
   <section id="camera" class="screen">
     <header class="topbar">
-      <div class="brand"><span class="logo"></span>ARTJAKE <em>Color</em></div>
+      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span><span class="staff-badge">직원 모드</span></button>
       <button class="home text-btn">처음으로</button>
     </header>
     <div class="page">
@@ -89,7 +89,7 @@
   <!-- 분석 중 -->
   <section id="analyzing" class="screen">
     <header class="topbar">
-      <div class="brand"><span class="logo"></span>ARTJAKE <em>Color</em></div>
+      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span><span class="staff-badge">직원 모드</span></button>
       <button class="home text-btn">처음으로</button>
     </header>
     <div class="page">
@@ -130,11 +130,44 @@
   <!-- 결과 -->
   <section id="result" class="screen">
     <header class="topbar">
-      <div class="brand"><span class="logo"></span>ARTJAKE <em>Color</em></div>
+      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span><span class="staff-badge">직원 모드</span></button>
       <button class="home text-btn">처음으로</button>
     </header>
     <div id="resultBody" class="page result"></div>
   </section>
+
+  <!-- 직원 모드: 진입 PIN -->
+  <div id="pinModal" class="modal" hidden>
+    <div class="sheet narrow">
+      <div class="head">
+        <p class="eyebrow">STAFF</p>
+        <h2>직원 모드</h2>
+        <p class="sub">직원 PIN 4자리를 입력해 주세요</p>
+      </div>
+      <input id="pinInput" class="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" />
+      <button id="pinOk" class="btn primary">확인</button>
+      <button class="btn link modal-close">취소</button>
+    </div>
+  </div>
+
+  <!-- 직원 모드: 기록 관리 -->
+  <div id="staffModal" class="modal" hidden>
+    <div class="sheet">
+      <div class="head">
+        <p class="eyebrow">STAFF</p>
+        <h2>진단 정확도 기록</h2>
+        <p class="sub">직원 모드가 켜져 있으면 결과 화면 맨 위에서 실제 타입을 기록할 수 있어요. 사진은 저장하지 않고 측정 수치만 남깁니다.</p>
+      </div>
+      <div class="staff-stats"><b id="recCount">0</b><span>건 기록됨</span></div>
+      <div class="staff-actions">
+        <button id="staffToggle" class="btn primary">직원 모드 켜기</button>
+        <button id="recMail" class="btn ghost">기록 메일로 보내기</button>
+        <button id="recCsv" class="btn ghost">CSV 파일로 저장</button>
+        <button id="recClear" class="btn link danger">기록 모두 지우기</button>
+      </div>
+      <button class="btn link modal-close">닫기</button>
+    </div>
+  </div>
 
   <div id="toast" class="toast"></div>
   <script type="module" src="app.js"></script>

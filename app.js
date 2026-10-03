@@ -1,7 +1,7 @@
 import { FilesetResolver, FaceLandmarker, ImageSegmenter } from './vendor/vision_bundle.mjs';
 import { sampleFrame, sampleHair, combine, classify, hexToRgb } from './color.js';
 import { TYPES } from './palettes.js';
-import { MAIL_ENDPOINT, MAIL_KEY } from './config.js';
+import { MAIL_ENDPOINT, MAIL_KEY, STAFF_PIN, STAFF_EMAIL } from './config.js';
 
 const $ = (id) => document.getElementById(id);
 const HOLD_MS = 3000;      // 조건이 모두 맞은 뒤 3·2·1 카운트다운 시간
@@ -288,7 +288,9 @@ async function analyze(shot, lm, fr) {
   btn.scrollIntoView({ behavior: 'smooth', block: 'end' });
   btn.onclick = () => {
     const opts = { hair: answers.hair, lens: answers.lens === 'yes', makeup: answers.makeup };
-    renderResult(classify(combined, opts), ctx);
+    const res = classify(combined, opts);
+    res.meta = { answers: { ...answers }, frames: fr.length, gains: combined.gains };
+    renderResult(res, ctx);
   };
 }
 
@@ -363,7 +365,7 @@ function renderResult(res, ctx) {
     <div class="track" style="background:${grad}"><span class="knob" style="left:${((v + 1) / 2) * 100}%"></span></div></div>`;
   const meas = (label, hex) => hex ? `<div><i style="background:${hex}"></i><span><small>${label}</small><code>${hex}</code></span></div>` : '';
 
-  $('resultBody').innerHTML = `
+  $('resultBody').innerHTML = (staffOn() ? staffCardHtml(res) : '') + `
     <div class="card res-top">
       <div class="res-photo"><canvas id="heroCanvas" width="1200" height="900"></canvas></div>
       <div class="res-body">
@@ -450,8 +452,135 @@ function renderResult(res, ctx) {
   $('btnRetry').onclick = goHome;
   $('btnSave').onclick = () => saveImage(res, ctx);
   lastCard = (photo = true) => buildCard(res, ctx, photo);
+  if (staffOn()) bindStaffCard(res);
   lastRender = res;
   show('result');
+}
+
+// ---------- 직원 모드: 실제 타입 기록 (판정 기준 보정용) ----------
+const LS_STAFF = 'pc_staff', LS_REC = 'pc_records';
+const ls = {
+  get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } },
+};
+const staffOn = () => ls.get(LS_STAFF, false) === true;
+const records = () => ls.get(LS_REC, []);
+function applyStaff() { document.body.classList.toggle('staff', staffOn()); }
+applyStaff();
+
+// 상단 로고 5번 연속 탭 → 직원 메뉴
+let taps = 0, tapTimer;
+document.querySelectorAll('.brand').forEach((b) => (b.onclick = () => {
+  taps++; clearTimeout(tapTimer); tapTimer = setTimeout(() => (taps = 0), 1500);
+  if (taps < 5) return;
+  taps = 0;
+  if (staffOn()) openStaffMenu();
+  else { $('pinInput').value = ''; $('pinModal').hidden = false; setTimeout(() => $('pinInput').focus(), 100); }
+}));
+$('pinOk').onclick = () => {
+  if ($('pinInput').value !== STAFF_PIN) { toast('PIN이 맞지 않아요'); $('pinInput').value = ''; return; }
+  $('pinModal').hidden = true; openStaffMenu();
+};
+$('pinInput').onkeydown = (e) => { if (e.key === 'Enter') $('pinOk').click(); };
+document.querySelectorAll('.modal-close').forEach((b) => (b.onclick = () => (b.closest('.modal').hidden = true)));
+['pinModal', 'staffModal'].forEach((id) => ($(id).onclick = (e) => { if (e.target === $(id)) $(id).hidden = true; }));
+
+function openStaffMenu() {
+  $('recCount').textContent = records().length;
+  $('staffToggle').textContent = staffOn() ? '직원 모드 끄기' : '직원 모드 켜기';
+  $('staffModal').hidden = false;
+}
+$('staffToggle').onclick = () => {
+  ls.set(LS_STAFF, !staffOn()); applyStaff(); openStaffMenu();
+  toast(staffOn() ? '직원 모드를 켰어요' : '직원 모드를 껐어요');
+};
+$('recClear').onclick = () => {
+  const n = records().length;
+  if (!n) return toast('지울 기록이 없어요');
+  if (!confirm(`기록 ${n}건을 모두 지울까요? 되돌릴 수 없어요.\n지우기 전에 메일이나 CSV로 먼저 보관해 두세요.`)) return;
+  ls.set(LS_REC, []); openStaffMenu(); toast('기록을 지웠어요');
+};
+$('recCsv').onclick = async () => {
+  const rec = records();
+  if (!rec.length) return toast('저장할 기록이 없어요');
+  const file = new File(['\uFEFF' + toCsv(rec)], `퍼스널컬러_기록_${stamp()}.csv`, { type: 'text/csv' });
+  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file] }); } catch {} return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+};
+$('recMail').onclick = async () => {
+  const rec = records();
+  if (!rec.length) return toast('보낼 기록이 없어요');
+  if (!MAIL_ENDPOINT) return toast('메일 발송이 설정되지 않았어요. CSV로 저장해 주세요');
+  const btn = $('recMail'); btn.disabled = true; btn.textContent = '보내는 중…';
+  try {
+    const csv = toCsv(rec);
+    const hits = rec.filter((r) => r.predicted === r.actual).length;
+    const html = `<div style="font-family:-apple-system,sans-serif;color:#111216">
+      <h2 style="margin:0 0 8px">퍼스널컬러 진단 기록 ${rec.length}건</h2>
+      <p style="margin:0 0 16px;color:#555">예측 일치 ${hits}건 (${Math.round((hits / rec.length) * 100)}%) · ${new Date().toLocaleString('ko-KR')}</p>
+      <p style="margin:0 0 6px;font-size:13px;color:#888">아래 CSV 내용을 그대로 복사해 판정 기준 보정에 사용합니다.</p>
+      <pre style="font:12px/1.5 Menlo,monospace;background:#F3F3F7;padding:12px;border-radius:8px;white-space:pre-wrap">${esc(csv)}</pre></div>`;
+    const r = await fetch(MAIL_ENDPOINT, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ key: MAIL_KEY, to: STAFF_EMAIL, subject: `[아트제이크] 퍼스널컬러 진단 기록 ${rec.length}건 (${stamp()})`, html, text: csv }),
+    });
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error);
+    toast(`${STAFF_EMAIL}로 기록을 보냈어요`, 2600);
+  } catch (e) {
+    console.error(e); toast('기록을 보내지 못했어요. CSV로 저장해 주세요', 2600);
+  } finally { btn.disabled = false; btn.textContent = '기록 메일로 보내기'; }
+};
+
+const stamp = () => { const d = new Date(), z = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}_${z(d.getHours())}${z(d.getMinutes())}`; };
+const r1 = (v) => (v == null ? '' : Number(v.toFixed(1)));
+const r3 = (v) => (v == null ? '' : Number(v.toFixed(3)));
+const LAB_KEYS = ['skin', 'hair', 'iris', 'lip', 'brow'];
+const CSV_COLS = ['time', 'predicted', 'actual', 'match', 'second', 'matchPct', 'makeup', 'hair', 'lens', 'frames',
+  ...LAB_KEYS.flatMap((k) => [`${k}L`, `${k}A`, `${k}B`]), 'skinHue', 'skinChroma', 'warmth', 'light', 'clarity', 'contrast', 'gainR', 'gainG', 'gainB', 'memo'];
+function toCsv(rec) {
+  const cell = (v) => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+  return [CSV_COLS.join(','), ...rec.map((r) => CSV_COLS.map((c) => cell(r[c])).join(','))].join('\n');
+}
+
+function staffCardHtml(res) {
+  return `<div class="card staff-card">
+    <div class="head"><p class="eyebrow">STAFF · 정확도 기록</p><h2>실제 타입을 골라 주세요</h2>
+      <p class="sub">전문가가 보기에 맞는 타입을 고르면 측정 수치와 함께 기록돼요. 예측과 같으면 그대로 저장하세요.</p></div>
+    <div class="type-pick">${Object.entries(TYPES).map(([id, t]) =>
+      `<button data-id="${id}" class="${id === res.type ? 'on pred' : ''}"><i style="background:${t.accent}"></i>${t.name.replace(/ (웜|쿨) /, ' ')}</button>`).join('')}</div>
+    <input id="staffMemo" class="staff-memo" placeholder="메모 (조명, 화장, 염색 등 특이사항)" />
+    <div class="staff-raw">${esc(rawText(res))}</div>
+    <button id="staffSave" class="btn primary">기록 저장</button>
+  </div>`;
+}
+function rawText(res) {
+  const l = res.lab, f = res.features, fmt = (a) => (a ? a.map(r1).join(' / ') : '-');
+  return [`피부 Lab ${fmt(l.skin)}   머리 ${fmt(l.hair)}`, `눈동자 ${fmt(l.iris)}   입술 ${fmt(l.lip)}`,
+    `웜 ${r1(f.warmth)}  밝기 ${r1(f.light)}  선명 ${r1(f.clarity)}  대비 ${r1(f.contrast)}  · 프레임 ${res.meta?.frames ?? '-'}장`].join('\n');
+}
+function bindStaffCard(res) {
+  let actual = res.type, saved = false;
+  const picks = [...document.querySelectorAll('.type-pick button')];
+  picks.forEach((b) => (b.onclick = () => { actual = b.dataset.id; picks.forEach((x) => x.classList.toggle('on', x === b)); }));
+  $('staffSave').onclick = () => {
+    if (saved) return toast('이미 저장했어요');
+    const l = res.lab, f = res.features, m = res.meta || {}, row = {
+      time: new Date().toISOString(), predicted: res.type, actual, match: res.type === actual ? 1 : 0,
+      second: res.ranking[1].id, matchPct: res.ranking[0].pct,
+      makeup: m.answers?.makeup, hair: m.answers?.hair, lens: m.answers?.lens, frames: m.frames,
+      skinHue: r1((Math.atan2(l.skin[2], l.skin[1]) * 180) / Math.PI), skinChroma: r1(Math.hypot(l.skin[1], l.skin[2])),
+      warmth: r3(f.warmth), light: r3(f.light), clarity: r3(f.clarity), contrast: r3(f.contrast),
+      gainR: m.gains && r3(m.gains[0]), gainG: m.gains && r3(m.gains[1]), gainB: m.gains && r3(m.gains[2]),
+      memo: $('staffMemo').value.trim(),
+    };
+    LAB_KEYS.forEach((k) => { const v = l[k]; row[`${k}L`] = v && r1(v[0]); row[`${k}A`] = v && r1(v[1]); row[`${k}B`] = v && r1(v[2]); });
+    const rec = records(); rec.push(row);
+    if (!ls.set(LS_REC, rec)) return toast('저장 공간이 부족해요. 기록을 내보낸 뒤 지워 주세요');
+    saved = true; $('staffSave').textContent = `저장됨 · 총 ${rec.length}건`; $('staffSave').disabled = true;
+    toast(`기록했어요 · 총 ${rec.length}건`);
+  };
 }
 
 // ---------- 메일 ----------
@@ -533,7 +662,7 @@ function emailHtml(res) {
 
   return `<div style="background:#ECEEF8;padding:24px 12px;${font}">
   <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:16px;padding:32px 28px">
-    <p style="margin:0;font-size:13px;font-weight:800;letter-spacing:.04em;color:#16161D">ARTJAKE <span style="font:italic 400 18px Georgia,serif">Color</span></p>
+    <p style="margin:0;font-size:13px;font-weight:800;letter-spacing:.04em;color:#16161D">ARTJAKE <span style="font-weight:600;letter-spacing:0;color:#8A8C99;padding-left:8px;margin-left:4px;border-left:1px solid #E8E8EE">퍼스널컬러 진단</span></p>
     <p style="margin:28px 0 6px;font-size:13px;color:#7C7F92">${s.tagline}</p>
     <h1 style="margin:0;font-size:34px;letter-spacing:-.02em;color:#16161D">${t.name}</h1>
     <p style="margin:6px 0 0;font:italic 20px Georgia,serif;color:#5A5E78">${t.en} <span style="font:700 12px sans-serif;background:#16161D;color:#fff;padding:3px 8px;border-radius:5px;vertical-align:3px">일치도 ${s.match}%</span></p>
@@ -577,7 +706,7 @@ function buildCard(res, ctx, photo) {
   const L = 100, R = W - 100;
   x.fillStyle = '#16161D'; x.font = font(800, 26); x.textAlign = 'left';
   x.fillText('ARTJAKE', L, 124);
-  x.font = `italic 36px ${serif}`; x.fillText('Color', L + 128, 124);
+  x.fillStyle = '#8A8C99'; x.font = font(600, 22); x.fillText('퍼스널컬러 진단', L + 142, 123);
 
   let y = 170;
   if (photo) {

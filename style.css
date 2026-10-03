@@ -1,5 +1,5 @@
 /* =========================================================
-   ARTJAKE Color — 매장 키오스크 (아이패드 세로 기준)
+   ARTJAKE 퍼스널컬러 진단 — 매장 키오스크 (아이패드 세로 기준)
    타이포: Pretendard Variable (한글·본문) + Instrument Serif (타입 영문명·숫자)
    ========================================================= */
 :root {
@@ -47,9 +47,17 @@ code { font-family: var(--mono); letter-spacing: 0; }
 /* ---------- 공통 레이아웃 ---------- */
 .topbar { display: flex; align-items: center; justify-content: space-between; max-width: 860px; margin: 0 auto; padding: calc(22px + var(--safe-t)) 32px 6px; }
 .topbar.center { justify-content: center; }
-.brand { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 800; letter-spacing: .14em; }
-.brand em { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 22px; letter-spacing: 0; margin-left: -3px; }
-.logo { width: 22px; height: 22px; border-radius: 50%; background: conic-gradient(from 200deg, #F6B89A, #E8A0BF, #C8B6E2, #8FA6BF, #C19A6B, #F6B89A); }
+.brand { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.brand b { font-size: 15px; font-weight: 800; letter-spacing: .2em; }
+.brand-sub { font-size: 13px; font-weight: 600; color: var(--mute); padding-left: 10px; border-left: 1px solid var(--line); line-height: 1; }
+.mark { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; width: 20px; height: 20px; }
+.mark i { border-radius: 2px; }
+.mark i:nth-child(1) { background: #F4A98C; }
+.mark i:nth-child(2) { background: #B784A7; }
+.mark i:nth-child(3) { background: #A0522D; }
+.mark i:nth-child(4) { background: #1B2A4A; }
+.staff-badge { display: none; font-size: 11px; font-weight: 800; color: #fff; background: #D1435B; padding: 4px 7px; border-radius: 5px; }
+body.staff .staff-badge { display: inline-block; }
 .badge { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0; background: var(--ink); color: #fff; padding: 4px 9px; border-radius: 6px; }
 .text-btn { font-size: 15px; color: var(--mute); font-weight: 600; padding: 10px 4px; }
 
@@ -245,3 +253,28 @@ code { font-family: var(--mono); letter-spacing: 0; }
   .measured { grid-template-columns: repeat(2, 1fr); }
   .row .why { font-size: 13px; }
 }
+
+/* ---------- 직원 모드 ---------- */
+.sheet.narrow { max-width: 400px; }
+.pin { display: block; width: 100%; height: 72px; margin-top: 24px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--soft); text-align: center; font: 700 32px var(--mono); letter-spacing: .5em; outline: none; -webkit-user-select: text; user-select: text; }
+.pin:focus { border-color: var(--ink); background: #fff; }
+.pin + .btn { margin-top: 12px; }
+.staff-stats { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-top: 24px; }
+.staff-stats b { font-family: var(--serif); font-weight: 400; font-size: 56px; line-height: 1; }
+.staff-stats span { color: var(--mute); font-weight: 600; }
+.staff-actions { display: grid; gap: 8px; margin-top: 24px; }
+.btn.danger { color: var(--warn); }
+
+.staff-card { border: 2px solid #D1435B; }
+.staff-card .eyebrow { color: #D1435B; }
+.type-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.type-pick button { height: 56px; border-radius: 12px; background: var(--soft); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.type-pick button i { width: 10px; height: 10px; border-radius: 50%; }
+.type-pick button.on { background: var(--ink); color: #fff; }
+.type-pick button.pred::after { content: '예측'; font-size: 10px; font-weight: 700; color: var(--mute); margin-left: 2px; }
+.type-pick button.on.pred::after { color: rgba(255,255,255,.6); }
+.staff-memo { width: 100%; height: 52px; margin-top: 12px; border: 1.5px solid var(--line); border-radius: 12px; padding: 0 16px; font: 500 16px var(--sans); background: var(--soft); outline: none; -webkit-user-select: text; user-select: text; }
+.staff-memo:focus { border-color: var(--ink); background: #fff; }
+.staff-raw { margin-top: 14px; font: 12px/1.7 var(--mono); color: var(--mute); background: var(--soft); border-radius: 10px; padding: 12px 14px; white-space: pre-wrap; -webkit-user-select: text; user-select: text; }
+#staffSave { margin-top: 14px; }
+@media (max-width: 560px) { .type-pick { grid-template-columns: repeat(2, 1fr); } .brand-sub { display: none; } }

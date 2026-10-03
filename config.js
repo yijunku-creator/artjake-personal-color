@@ -4,3 +4,8 @@
 // 비워두면 아이패드 공유 창(메일 앱)으로 보내는 방식으로 동작합니다.
 export const MAIL_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyOCwzGoyzx4KDFiMjC_cQAfXapPMfwNqIqEoL6EbZaz0sfSPSYG9O72q9272a0m5ym/exec';
 export const MAIL_KEY = 'artjake-eNye-_U30fXBgi9o';
+
+// 직원 모드 (상단 로고를 5번 연속 누르면 열림)
+export const STAFF_PIN = '2580';
+// 직원 기록을 받을 메일 주소
+export const STAFF_EMAIL = 'yijunku@gmail.com';
