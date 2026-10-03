@@ -1,5 +1,5 @@
 // 색 계산 + 얼굴 부위 샘플링 + 퍼스널 컬러 분류 (모두 기기 안에서 처리)
-import { TYPES } from './palettes.js?v=20261003211257';
+import { TYPES } from './palettes.js?v=20261003211428';
 
 // ---------- 색공간 변환 ----------
 const toLin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };

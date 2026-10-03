@@ -1,7 +1,7 @@
-import { FilesetResolver, FaceLandmarker, ImageSegmenter } from './vendor/vision_bundle.mjs?v=20261003211257';
-import { sampleFrame, sampleHair, combine, classify, hexToRgb } from './color.js?v=20261003211257';
-import { TYPES } from './palettes.js?v=20261003211257';
-import { MAIL_ENDPOINT, MAIL_KEY, ADMIN_PIN } from './config.js?v=20261003211257';
+import { FilesetResolver, FaceLandmarker, ImageSegmenter } from './vendor/vision_bundle.mjs?v=20261003211428';
+import { sampleFrame, sampleHair, combine, classify, hexToRgb } from './color.js?v=20261003211428';
+import { TYPES } from './palettes.js?v=20261003211428';
+import { MAIL_ENDPOINT, MAIL_KEY, ADMIN_PIN } from './config.js?v=20261003211428';
 
 const $ = (id) => document.getElementById(id);
 const HOLD_MS = 3000;      // 조건이 모두 맞은 뒤 3·2·1 카운트다운 시간
