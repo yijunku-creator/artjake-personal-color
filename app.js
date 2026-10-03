@@ -124,7 +124,7 @@ function layout() {
   }
   const vw = video.videoWidth, vh = video.videoHeight;
   const s = Math.max(cw / vw, ch / vh);
-  const ry = Math.min(ch * 0.33, cw * 0.44), rx = ry * 0.76;
+  const ry = Math.min(ch * 0.27, cw * 0.36), rx = ry * 0.76;
   return { cw, ch, dpr, s, ox: (cw - vw * s) / 2, oy: (ch - vh * s) / 2, cx: cw / 2, cy: ch * 0.5, rx, ry };
 }
 
@@ -151,10 +151,13 @@ function evaluate(lm) {
     const size = Math.hypot(chin[0] - top[0], chin[1] - top[1]) / (2 * g.ry);
     const yaw = (nose[0] - (l[0] + r[0]) / 2) / Math.abs(r[0] - l[0]);
     const roll = Math.abs(Math.atan2(e2[1] - e1[1], e2[0] - e1[0]) * 180 / Math.PI);
-    c.dist = size >= 0.6 && size <= 0.95;
-    c.pos = Math.abs(fx - g.cx) <= g.rx * 0.28 && Math.abs(fy - g.cy) <= g.ry * 0.22;
-    c.front = Math.abs(yaw) <= 0.13;
-    c.level = Math.min(roll, 180 - roll) <= 10;
+    // 얼굴이 영상에서 너무 작으면 눈동자·피부 픽셀이 부족 → 최소 크기는 실제 픽셀 기준으로 확인
+    const facePx = Math.hypot((lm[454].x - lm[234].x) * video.videoWidth, (lm[454].y - lm[234].y) * video.videoHeight);
+    const tooFar = size < 0.45 || facePx < 160, tooClose = size > 1.15;
+    c.dist = !tooFar && !tooClose;
+    c.pos = Math.abs(fx - g.cx) <= g.rx * 0.5 && Math.abs(fy - g.cy) <= g.ry * 0.4;
+    c.front = Math.abs(yaw) <= 0.2;
+    c.level = Math.min(roll, 180 - roll) <= 14;
 
     // 이 프레임의 색 수집 (밝기 확인 겸)
     wctx.drawImage(video, 0, 0, work.width, work.height);
@@ -169,8 +172,8 @@ function evaluate(lm) {
       c.light = f.skinL >= 32;
     }
 
-    if (size < 0.6) msg = '조금 더 가까이 와주세요';
-    else if (size > 0.95) msg = '조금만 뒤로 가주세요';
+    if (tooFar) msg = '조금 더 가까이 와주세요';
+    else if (tooClose) msg = '조금만 뒤로 가주세요';
     else if (!c.pos) msg = '얼굴을 원 가운데로 맞춰주세요';
     else if (!c.front) msg = '정면을 바라봐 주세요';
     else if (!c.level) msg = '고개를 똑바로 세워주세요';
