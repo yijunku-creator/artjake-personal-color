@@ -16,13 +16,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=20261003211257" />
 </head>
 <body>
   <!-- 시작 -->
   <section id="start" class="screen active">
     <header class="topbar center">
-      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span><span class="staff-badge">직원 모드</span></button>
+      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span></button>
     </header>
     <div class="start">
       <div class="orbit" aria-hidden="true">
@@ -38,7 +38,7 @@
         <li><b>01</b>얼굴 상태 선택</li><li><b>02</b>자동 촬영</li><li><b>03</b>결과 확인</li>
       </ol>
       <p id="startError" class="error" hidden></p>
-      <p class="privacy">사진은 이 기기 안에서만 분석되고 저장되지 않아요</p>
+      <p class="privacy">사진은 이 기기 안에서만 분석되고 저장되지 않아요 · 정확도 개선을 위해 색 측정값만 익명으로 기록돼요</p>
     </div>
   </section>
 
@@ -62,7 +62,7 @@
   <!-- 카메라 -->
   <section id="camera" class="screen">
     <header class="topbar">
-      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span><span class="staff-badge">직원 모드</span></button>
+      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span></button>
       <button class="home text-btn">처음으로</button>
     </header>
     <div class="page">
@@ -89,7 +89,7 @@
   <!-- 분석 중 -->
   <section id="analyzing" class="screen">
     <header class="topbar">
-      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span><span class="staff-badge">직원 모드</span></button>
+      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span></button>
       <button class="home text-btn">처음으로</button>
     </header>
     <div class="page">
@@ -130,19 +130,19 @@
   <!-- 결과 -->
   <section id="result" class="screen">
     <header class="topbar">
-      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span><span class="staff-badge">직원 모드</span></button>
+      <button class="brand" aria-label="아트제이크 퍼스널컬러 진단"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">퍼스널컬러 진단</span></button>
       <button class="home text-btn">처음으로</button>
     </header>
     <div id="resultBody" class="page result"></div>
   </section>
 
-  <!-- 직원 모드: 진입 PIN -->
+  <!-- 관리자 화면 진입 PIN -->
   <div id="pinModal" class="modal" hidden>
     <div class="sheet narrow">
       <div class="head">
-        <p class="eyebrow">STAFF</p>
-        <h2>직원 모드</h2>
-        <p class="sub">직원 PIN 6자리를 입력해 주세요</p>
+        <p class="eyebrow">ADMIN</p>
+        <h2>관리자</h2>
+        <p class="sub">PIN 6자리를 입력해 주세요</p>
       </div>
       <input id="pinInput" class="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" />
       <button id="pinOk" class="btn primary">확인</button>
@@ -150,26 +150,34 @@
     </div>
   </div>
 
-  <!-- 직원 모드: 기록 관리 -->
-  <div id="staffModal" class="modal" hidden>
-    <div class="sheet">
+  <!-- 관리자: 진단 기록 -->
+  <section id="admin" class="screen">
+    <header class="topbar">
+      <div class="brand static"><span class="mark"><i></i><i></i><i></i><i></i></span><b>ARTJAKE</b><span class="brand-sub">관리자</span></div>
+      <button class="home text-btn">닫기</button>
+    </header>
+    <div class="page">
       <div class="head">
-        <p class="eyebrow">STAFF</p>
-        <h2>진단 정확도 기록</h2>
-        <p class="sub">직원 모드가 켜져 있으면 결과 화면 맨 위에서 실제 타입을 기록할 수 있어요. 사진은 저장하지 않고 측정 수치만 남깁니다.</p>
+        <p class="eyebrow">ADMIN</p>
+        <h2>진단 기록</h2>
+        <p class="sub">모든 진단의 색 측정값이 자동으로 쌓여요(사진은 저장하지 않아요). 노션 '퍼스널컬러 진단 기록'에도 같이 저장돼요. 전문가가 보기에 맞는 실제 타입을 골라 두면 판정 기준을 보정하는 데 쓰여요.</p>
       </div>
-      <div class="staff-stats"><b id="recCount">0</b><span>건 기록됨</span></div>
-      <div class="staff-actions">
-        <button id="staffToggle" class="btn primary">직원 모드 켜기</button>
-        <button id="recMail" class="btn ghost">기록 메일로 보내기</button>
-        <button id="recCsv" class="btn ghost">CSV 파일로 저장</button>
-        <button id="recClear" class="btn link danger">기록 모두 지우기</button>
+      <div class="admin-stats">
+        <div><b id="stTotal">-</b><small>전체 진단</small></div>
+        <div><b id="stLabeled">-</b><small>실제 타입 확인</small></div>
+        <div><b id="stAcc">-</b><small>예측 일치율</small></div>
       </div>
-      <button class="btn link modal-close">닫기</button>
+      <div class="admin-tools">
+        <button id="admReload" class="btn ghost">새로고침</button>
+        <button id="admCsv" class="btn ghost">CSV 저장</button>
+        <a id="admSheet" class="btn ghost" target="_blank" rel="noopener">노션에서 열기</a>
+      </div>
+      <p id="admPending" class="sub center" hidden></p>
+      <div id="admList" class="adm-list"></div>
     </div>
-  </div>
+  </section>
 
   <div id="toast" class="toast"></div>
-  <script type="module" src="app.js"></script>
+  <script type="module" src="app.js?v=20261003211257"></script>
 </body>
 </html>

@@ -5,7 +5,5 @@
 export const MAIL_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyOCwzGoyzx4KDFiMjC_cQAfXapPMfwNqIqEoL6EbZaz0sfSPSYG9O72q9272a0m5ym/exec';
 export const MAIL_KEY = 'artjake-eNye-_U30fXBgi9o';
 
-// 직원 모드 (상단 로고를 5번 연속 누르면 열림)
-export const STAFF_PIN = '548077';
-// 직원 기록을 받을 메일 주소
-export const STAFF_EMAIL = 'yijunku@gmail.com';
+// 관리자 화면 PIN (상단 로고를 5번 연속 누르면 입력창이 열림)
+export const ADMIN_PIN = '548077';

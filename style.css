@@ -56,8 +56,6 @@ code { font-family: var(--mono); letter-spacing: 0; }
 .mark i:nth-child(2) { background: #B784A7; }
 .mark i:nth-child(3) { background: #A0522D; }
 .mark i:nth-child(4) { background: #1B2A4A; }
-.staff-badge { display: none; font-size: 11px; font-weight: 800; color: #fff; background: #D1435B; padding: 4px 7px; border-radius: 5px; }
-body.staff .staff-badge { display: inline-block; }
 .badge { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0; background: var(--ink); color: #fff; padding: 4px 9px; border-radius: 6px; }
 .text-btn { font-size: 15px; color: var(--mute); font-weight: 600; padding: 10px 4px; }
 
@@ -254,27 +252,33 @@ body.staff .staff-badge { display: inline-block; }
   .row .why { font-size: 13px; }
 }
 
-/* ---------- 직원 모드 ---------- */
+/* ---------- 관리자 ---------- */
 .sheet.narrow { max-width: 400px; }
-.pin { display: block; width: 100%; height: 72px; margin-top: 24px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--soft); text-align: center; font: 700 32px var(--mono); letter-spacing: .35em; outline: none; -webkit-user-select: text; user-select: text; }
+.pin { display: block; width: 100%; height: 72px; margin-top: 24px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--soft); text-align: center; font: 700 30px var(--mono); letter-spacing: .35em; outline: none; -webkit-user-select: text; user-select: text; }
 .pin:focus { border-color: var(--ink); background: #fff; }
 .pin + .btn { margin-top: 12px; }
-.staff-stats { display: flex; align-items: baseline; justify-content: center; gap: 6px; margin-top: 24px; }
-.staff-stats b { font-family: var(--serif); font-weight: 400; font-size: 56px; line-height: 1; }
-.staff-stats span { color: var(--mute); font-weight: 600; }
-.staff-actions { display: grid; gap: 8px; margin-top: 24px; }
-.btn.danger { color: var(--warn); }
-
-.staff-card { border: 2px solid #D1435B; }
-.staff-card .eyebrow { color: #D1435B; }
-.type-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.type-pick button { height: 56px; border-radius: 12px; background: var(--soft); font-size: 15px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px; }
-.type-pick button i { width: 10px; height: 10px; border-radius: 50%; }
-.type-pick button.on { background: var(--ink); color: #fff; }
-.type-pick button.pred::after { content: '예측'; font-size: 10px; font-weight: 700; color: var(--mute); margin-left: 2px; }
-.type-pick button.on.pred::after { color: rgba(255,255,255,.6); }
-.staff-memo { width: 100%; height: 52px; margin-top: 12px; border: 1.5px solid var(--line); border-radius: 12px; padding: 0 16px; font: 500 16px var(--sans); background: var(--soft); outline: none; -webkit-user-select: text; user-select: text; }
-.staff-memo:focus { border-color: var(--ink); background: #fff; }
-.staff-raw { margin-top: 14px; font: 12px/1.7 var(--mono); color: var(--mute); background: var(--soft); border-radius: 10px; padding: 12px 14px; white-space: pre-wrap; -webkit-user-select: text; user-select: text; }
-#staffSave { margin-top: 14px; }
-@media (max-width: 560px) { .type-pick { grid-template-columns: repeat(2, 1fr); } .brand-sub { display: none; } }
+.brand.static { cursor: default; }
+.admin-stats { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+.admin-stats div { padding: 22px 8px; text-align: center; }
+.admin-stats div + div { border-left: 1px solid var(--line); }
+.admin-stats b { display: block; font-family: var(--serif); font-weight: 400; font-size: 44px; line-height: 1; }
+.admin-stats small { display: block; margin-top: 8px; font-size: 13px; color: var(--mute); font-weight: 600; }
+.admin-tools { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.admin-tools .btn { height: 52px; font-size: 15px; text-decoration: none; }
+.adm-list { display: grid; gap: 8px; }
+.adm-row { display: grid; grid-template-columns: 36px 1fr 190px; grid-template-areas: "sw main sel" "memo memo memo"; gap: 10px 12px; align-items: center; background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 14px; padding: 14px 16px; }
+.adm-row.hit { border-left-color: #2BB673; }
+.adm-row.miss { border-left-color: var(--warn); }
+.adm-row > i { grid-area: sw; width: 36px; height: 36px; border-radius: 8px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.08); }
+.adm-main { grid-area: main; display: flex; flex-direction: column; line-height: 1.4; min-width: 0; }
+.adm-main b { font-size: 15px; }
+.adm-main span { font-size: 13px; color: var(--mute); }
+.adm-main em { font-style: normal; font-weight: 700; color: var(--ink-2); }
+.adm-actual { grid-area: sel; height: 44px; border: 1.5px solid var(--line); border-radius: 10px; padding: 0 10px; font: 600 14px var(--sans); background: var(--soft); color: var(--ink); }
+.adm-memo { grid-area: memo; height: 40px; border: 1.5px solid var(--line); border-radius: 10px; padding: 0 12px; font: 500 14px var(--sans); background: var(--soft); outline: none; -webkit-user-select: text; user-select: text; }
+.adm-memo:focus, .adm-actual:focus { border-color: var(--ink); background: #fff; outline: none; }
+@media (max-width: 560px) {
+  .brand-sub { display: none; }
+  .adm-row { grid-template-columns: 36px 1fr; grid-template-areas: "sw main" "sel sel" "memo memo"; }
+  .admin-tools { grid-template-columns: 1fr; }
+}
