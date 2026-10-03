@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="퍼스널컬러" />
+  <meta name="theme-color" content="#F5F5F8" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-180.png" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <title>아트제이크 퍼스널 컬러</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- 시작 -->
+  <section id="start" class="screen active">
+    <header class="topbar center">
+      <div class="brand"><span class="logo"></span>ARTJAKE <em>Color</em></div>
+    </header>
+    <div class="start">
+      <div class="orbit" aria-hidden="true">
+        <div class="orbit-glow"></div>
+        <div class="orbit-core"><b>8</b><small>COLOR TYPES</small></div>
+        <div id="orbitRing" class="orbit-ring"></div>
+      </div>
+      <p class="eyebrow">PERSONAL COLOR</p>
+      <h1 class="display">나를 가장<br />빛나게 하는 색</h1>
+      <p class="lead">카메라를 바라보면 피부·눈동자·머리카락을 읽어<br />8가지 타입 중 꼭 맞는 컬러를 찾아드려요.</p>
+      <button id="btnStart" class="btn primary cta" disabled>준비 중…</button>
+      <ol class="flow">
+        <li><b>01</b>얼굴 상태 선택</li><li><b>02</b>자동 촬영</li><li><b>03</b>결과 확인</li>
+      </ol>
+      <p id="startError" class="error" hidden></p>
+      <p class="privacy">사진은 이 기기 안에서만 분석되고 저장되지 않아요</p>
+    </div>
+  </section>
+
+  <!-- 촬영 전: 얼굴 상태 -->
+  <div id="modal" class="modal" hidden>
+    <div class="sheet">
+      <div class="head">
+        <p class="eyebrow">BEFORE WE START</p>
+        <h2>지금 얼굴 상태를 골라 주세요</h2>
+        <p class="sub">화장은 피부·입술 색을 바꿔요. 골라주시면 그만큼 감안해서 계산해요.</p>
+      </div>
+      <div class="opts">
+        <button data-v="none"><b>맨얼굴</b><small>화장하지 않았어요</small></button>
+        <button data-v="base"><b>베이스만</b><small>선크림·쿠션 정도</small></button>
+        <button data-v="full"><b>풀메이크업</b><small>립·색조까지 했어요</small></button>
+      </div>
+      <button id="modalCancel" class="btn link">취소</button>
+    </div>
+  </div>
+
+  <!-- 카메라 -->
+  <section id="camera" class="screen">
+    <header class="topbar">
+      <div class="brand"><span class="logo"></span>ARTJAKE <em>Color</em></div>
+      <button class="home text-btn">처음으로</button>
+    </header>
+    <div class="page">
+      <div class="head">
+        <p class="eyebrow">SELF SHOT</p>
+        <h2>얼굴을 타원에 맞춰 주세요</h2>
+      </div>
+      <div class="cam">
+        <video id="video" playsinline muted autoplay></video>
+        <canvas id="overlay"></canvas>
+        <ul id="checks" class="checks">
+          <li data-k="face">얼굴</li><li data-k="dist">거리</li><li data-k="pos">위치</li>
+          <li data-k="front">정면</li><li data-k="level">수평</li><li data-k="light">밝기</li>
+        </ul>
+        <div id="count" class="count"></div>
+        <div class="guide-msg"><span id="guideText">얼굴을 원 안에 맞춰주세요</span></div>
+        <div id="flash" class="flash"></div>
+      </div>
+      <p class="sub center">여섯 가지가 모두 켜지면 3·2·1 카운트다운 후 자동으로 촬영돼요</p>
+      <button class="btn ghost home cam-cancel">취소</button>
+    </div>
+  </section>
+
+  <!-- 분석 중 -->
+  <section id="analyzing" class="screen">
+    <header class="topbar">
+      <div class="brand"><span class="logo"></span>ARTJAKE <em>Color</em></div>
+      <button class="home text-btn">처음으로</button>
+    </header>
+    <div class="page">
+      <div class="card">
+        <div class="head">
+          <p class="eyebrow">ANALYZING</p>
+          <h2 id="anTitle">색을 읽는 중입니다</h2>
+          <p id="anSub" class="sub">연속 촬영 프레임을 합치는 중…</p>
+        </div>
+        <div class="shot"><canvas id="snapshot"></canvas><div class="scan-line"></div></div>
+        <ul id="checklist" class="checklist">
+          <li>얼굴을 찾는 중</li>
+          <li>조명 색을 걷어내는 중</li>
+          <li>피부·머리카락·눈동자 측정 중</li>
+          <li>타입과 대조하는 중</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <p class="eyebrow">WHILE YOU WAIT</p>
+          <h2>기다리는 동안 알려주세요</h2>
+          <p class="sub">염색·렌즈는 원래 색을 가려요. 알려주시면 그만큼 빼고 계산해요.</p>
+        </div>
+        <div class="q">
+          <p>지금 머리색은?</p>
+          <div class="pills" data-key="hair"><button data-v="natural" class="on">원래 머리색</button><button data-v="dyed">염색·탈색함</button></div>
+        </div>
+        <div class="q">
+          <p>컬러렌즈를 꼈나요?</p>
+          <div class="pills" data-key="lens"><button data-v="no" class="on">아니요</button><button data-v="yes">꼈어요</button></div>
+        </div>
+        <button id="btnShowResult" class="btn primary" disabled>분석 중…</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 결과 -->
+  <section id="result" class="screen">
+    <header class="topbar">
+      <div class="brand"><span class="logo"></span>ARTJAKE <em>Color</em></div>
+      <button class="home text-btn">처음으로</button>
+    </header>
+    <div id="resultBody" class="page result"></div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
