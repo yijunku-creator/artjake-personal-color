@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
-  <link rel="stylesheet" href="style.css?v=20261003211428" />
+  <link rel="stylesheet" href="style.css?v=20261004092426" />
 </head>
 <body>
   <!-- 시작 -->
@@ -39,6 +39,7 @@
       </ol>
       <p id="startError" class="error" hidden></p>
       <p class="privacy">사진은 이 기기 안에서만 분석되고 저장되지 않아요 · 정확도 개선을 위해 색 측정값만 익명으로 기록돼요</p>
+      <button id="btnAdmin" class="admin-link">관리자 모드</button>
     </div>
   </section>
 
@@ -68,7 +69,7 @@
     <div class="page">
       <div class="head">
         <p class="eyebrow">SELF SHOT</p>
-        <h2>얼굴을 타원에 맞춰 주세요</h2>
+        <h2 id="camTitle">얼굴을 타원에 맞춰 주세요</h2>
       </div>
       <div class="cam">
         <video id="video" playsinline muted autoplay></video>
@@ -172,12 +173,17 @@
         <button id="admCsv" class="btn ghost">CSV 저장</button>
         <a id="admSheet" class="btn ghost" target="_blank" rel="noopener">노션에서 열기</a>
       </div>
+      <div class="bgref">
+        <i id="bgRefSwatch"></i>
+        <div><b>배경 기준</b><span id="bgRefText">아직 설정하지 않았어요</span><small>스튜디오 조명을 켜고, 손님이 서는 자리 뒤 배경만 보이게 한 뒤 한 번 찍어두면 촬영마다 달라지는 카메라 색·밝기를 맞춰줘요. 조명이나 배경을 바꾸면 다시 잡아주세요.</small></div>
+        <button id="btnBgRef" class="btn primary">배경 기준 잡기</button>
+      </div>
       <p id="admPending" class="sub center" hidden></p>
       <div id="admList" class="adm-list"></div>
     </div>
   </section>
 
   <div id="toast" class="toast"></div>
-  <script type="module" src="app.js?v=20261003211428"></script>
+  <script type="module" src="app.js?v=20261004092426"></script>
 </body>
 </html>

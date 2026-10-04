@@ -1,5 +1,5 @@
 // 색 계산 + 얼굴 부위 샘플링 + 퍼스널 컬러 분류 (모두 기기 안에서 처리)
-import { TYPES } from './palettes.js?v=20261003211428';
+import { TYPES } from './palettes.js?v=20261004092426';
 
 // ---------- 색공간 변환 ----------
 const toLin = (c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
@@ -143,24 +143,71 @@ export function sampleHair(img, cat, conf, mw, mh, lm, W, H) {
 
 // ---------- 여러 프레임 합치기 + 화이트밸런스 ----------
 
-export function combine(frames, hair) {
+// 여러 프레임을 합치고, 조명 보정 배율(gains)을 적용
+// gains는 배경(스튜디오 벽) 기준으로 계산한 값 — 흰자 기준은 촬영마다 흔들려서 쓰지 않음
+export function combine(frames, hair, gains = [1, 1, 1]) {
   const skin = medRGB(frames.flatMap((f) => (f.skinParts.length ? [medRGB(f.skinParts)] : [])));
   if (!skin) return null;
   const raw = {
-    skin, iris: medRGB(frames.map((f) => f.iris)), sclera: medRGB(frames.map((f) => f.sclera)),
+    skin, iris: medRGB(frames.map((f) => f.iris)),
     lip: medRGB(frames.map((f) => f.lip)), brow: medRGB(frames.map((f) => f.brow)), hair,
   };
-  // 흰자를 중립색 기준으로 삼아 조명 색을 60%만 보정 (과보정 방지)
-  let gains = [1, 1, 1];
-  if (raw.sclera) {
-    const s = raw.sclera, g = (s[0] + s[1] + s[2]) / 3;
-    gains = s.map((c) => Math.min(1.12, Math.max(0.88, 1 + 0.6 * (g / c - 1))));
-  }
   const fix = (c) => (c ? c.map((v, i) => v * gains[i]) : null);
   const out = { gains };
   for (const k of ['skin', 'iris', 'lip', 'brow', 'hair']) out[k] = fix(raw[k]);
   if (!out.hair) out.hair = out.brow;
   return out;
+}
+
+// 배경(사람이 아닌 부분)의 평균색 — 세그멘테이션 배경 확신도가 높은 픽셀만, 밝기 양끝 제외
+export function backgroundColor(img, cat, bgConf, mw, mh) {
+  const W = img.width, H = img.height, d = img.data, px = [];
+  const step = Math.max(2, Math.round(W / 320));
+  for (let y = 0; y < H; y += step) {
+    for (let x = 0; x < W; x += step) {
+      const mi = Math.floor((y / H) * mh) * mw + Math.floor((x / W) * mw);
+      if (cat[mi] !== 0 || bgConf[mi] < 0.6) continue;
+      const i = (y * W + x) * 4, p = [LIN[d[i]], LIN[d[i + 1]], LIN[d[i + 2]]];
+      p.l = lum(...p);
+      px.push(p);
+    }
+  }
+  const total = Math.ceil(H / step) * Math.ceil(W / step);
+  return { rgb: px.length > 300 ? trimmedMean(px, 0.15, 0.15) : null, frac: px.length / total };
+}
+
+// 화면 가운데 영역의 평균색 (사람 없이 배경만 찍는 '배경 기준 잡기'용)
+export function centerColor(img) {
+  const W = img.width, H = img.height, d = img.data, px = [];
+  const step = Math.max(2, Math.round(W / 320));
+  for (let y = Math.floor(H * 0.15); y < H * 0.85; y += step) {
+    for (let x = Math.floor(W * 0.15); x < W * 0.85; x += step) {
+      const i = (y * W + x) * 4, p = [LIN[d[i]], LIN[d[i + 1]], LIN[d[i + 2]]];
+      p.l = lum(...p);
+      px.push(p);
+    }
+  }
+  return trimmedMean(px, 0.15, 0.15);
+}
+
+// 이번 촬영의 배경색을 기준 배경색에 맞추는 배율 (카메라 자동 화이트밸런스·노출 흔들림 상쇄)
+// 기준이 없으면 배경이 무채색(흰·회색 벽)일 때만 회색에 맞춤
+export function lightGains(bg, ref) {
+  if (!bg) return [1, 1, 1];
+  const c = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  if (ref) return bg.map((v, i) => c(ref[i] / Math.max(v, 1e-4), 0.6, 1.7));
+  const g = (bg[0] + bg[1] + bg[2]) / 3, spread = (Math.max(...bg) - Math.min(...bg)) / g;
+  if (spread > 0.25) return [1, 1, 1];
+  return bg.map((v) => c(g / v, 0.88, 1.12));
+}
+
+// 측정값이 사람 피부로 보기 어려우면(조명 불량·가림) 다시 찍게 함
+export function measurementProblem(c) {
+  const [L, a, b] = linToLab(c.skin), C = Math.hypot(a, b);
+  if (L < 38) return '얼굴이 너무 어둡게 찍혔어요. 조명을 켜고 다시 해주세요.';
+  if (L > 90) return '얼굴이 너무 밝게 날아갔어요. 조명을 조금 줄이고 다시 해주세요.';
+  if (C < 9) return '피부색이 회색빛으로 읽혔어요. 조명 색을 확인하고 다시 해주세요.';
+  return null;
 }
 
 // ---------- 분류 ----------
@@ -189,7 +236,7 @@ export function classify(c, opts = {}) {
 
   // 웜/쿨: 피부 색상각(노랑↔분홍) 중심, 머리·눈동자·입술 보조
   const warmth = wavg([
-    [clamp((sHue - 54) / 9), 0.6],
+    [clamp((sHue - 54) / 12), 0.6],
     [hair && !dyed ? clamp((hair[2] - 4) / 6) : null, 0.15],
     [eye ? clamp((eye[2] - 6) / 6) : null, 0.1],
     [lab.lip ? clamp(((Math.atan2(lab.lip[2], lab.lip[1]) * 180) / Math.PI - 28) / 10) : null, lipW8],

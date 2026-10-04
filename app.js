@@ -1,7 +1,7 @@
-import { FilesetResolver, FaceLandmarker, ImageSegmenter } from './vendor/vision_bundle.mjs?v=20261003211428';
-import { sampleFrame, sampleHair, combine, classify, hexToRgb } from './color.js?v=20261003211428';
-import { TYPES } from './palettes.js?v=20261003211428';
-import { MAIL_ENDPOINT, MAIL_KEY, ADMIN_PIN } from './config.js?v=20261003211428';
+import { FilesetResolver, FaceLandmarker, ImageSegmenter } from './vendor/vision_bundle.mjs?v=20261004092426';
+import { sampleFrame, sampleHair, combine, classify, hexToRgb, backgroundColor, centerColor, lightGains, measurementProblem, linToHex } from './color.js?v=20261004092426';
+import { TYPES } from './palettes.js?v=20261004092426';
+import { MAIL_ENDPOINT, MAIL_KEY, ADMIN_PIN } from './config.js?v=20261004092426';
 
 const $ = (id) => document.getElementById(id);
 const HOLD_MS = 3000;      // 조건이 모두 맞은 뒤 3·2·1 카운트다운 시간
@@ -86,7 +86,7 @@ $('modal').querySelectorAll('.opts button').forEach((b) => (b.onclick = () => {
 $('modalCancel').onclick = () => { $('modal').hidden = true; };
 $('modal').onclick = (e) => { if (e.target === $('modal')) $('modal').hidden = true; };
 
-$('btnStart').onclick = () => askMakeup(startCamera);
+$('btnStart').onclick = () => askMakeup(() => startCamera('face'));
 
 // ---------- 카메라 ----------
 const video = $('video'), overlay = $('overlay'), octx = overlay.getContext('2d');
@@ -94,7 +94,9 @@ const work = document.createElement('canvas'), wctx = work.getContext('2d', { wi
 const checkEls = Object.fromEntries([...document.querySelectorAll('#checks li')].map((li) => [li.dataset.k, li]));
 let lastT = -1, holdStart = null, frames = [], lastMsg = '', lastCount = '';
 
-async function startCamera() {
+let camMode = 'face'; // 'face' 진단 / 'calib' 배경 기준 잡기
+async function startCamera(mode = 'face') {
+  camMode = mode;
   if (!navigator.mediaDevices?.getUserMedia) {
     showError('이 주소에서는 카메라를 켤 수 없어요. https 주소로 접속해 주세요.');
     return;
@@ -111,8 +113,10 @@ async function startCamera() {
   await video.play();
   work.width = video.videoWidth; work.height = video.videoHeight;
   holdStart = null; frames = []; lastT = -1; lastMsg = ''; setCount('');
+  $('camTitle').textContent = mode === 'calib' ? '사람 없이 배경만 비춰 주세요' : '얼굴을 타원에 맞춰 주세요';
+  document.querySelector('.cam').classList.toggle('calib', mode === 'calib');
   show('camera');
-  requestAnimationFrame(tick);
+  if (mode === 'calib') runCalib(); else requestAnimationFrame(tick);
 }
 
 function stopCamera() { stream?.getTracks().forEach((t) => t.stop()); stream = null; }
@@ -269,11 +273,15 @@ async function analyze(shot, lm, fr) {
     hairConf = res.confidenceMasks[1].getAsFloat32Array().slice();
   });
   const hair = sampleHair({ data: full.data, width: W, height: H, ox: 0, oy: 0 }, cat, hairConf, mw, mh, lm, W, H);
-  const combined = combine(fr, hair);
+  const bg = backgroundColor({ data: full.data, width: W, height: H }, cat, bgConf, mw, mh);
+  const gains = bg.frac > 0.08 ? lightGains(bg.rgb, bgRef()?.rgb) : [1, 1, 1];
+  const combined = combine(fr, hair, gains);
   if (!combined) {
     show('start');
     return showError('피부 톤을 읽지 못했어요. 얼굴을 가리는 머리카락·손을 치우고 밝은 곳에서 다시 해주세요.');
   }
+  const problem = measurementProblem(combined);
+  if (problem) { show('start'); return showError(problem); }
   await sleep(STEP_MS - (performance.now() - t1));
   mark(2);
   const ctx = { shot, cutout: makeCutout(shot, bgConf, mw, mh), crop: cropRect(lm, W, H, 1.25, 2.6, 0.7), hero: cropRect(lm, W, H, 0.75, 3.4, 0.95) };
@@ -516,14 +524,8 @@ async function flushQueue() {
 flushQueue();
 addEventListener('online', flushQueue);
 
-// ---------- 관리자 화면 (상단 로고 5번 연속 탭 → PIN) ----------
-let taps = 0, tapTimer;
-document.querySelectorAll('.brand').forEach((b) => (b.onclick = () => {
-  taps++; clearTimeout(tapTimer); tapTimer = setTimeout(() => (taps = 0), 1500);
-  if (taps < 5) return;
-  taps = 0;
-  $('pinInput').value = ''; $('pinModal').hidden = false; setTimeout(() => $('pinInput').focus(), 100);
-}));
+// ---------- 관리자 화면 (시작 화면 하단 '관리자 모드' → PIN) ----------
+$('btnAdmin').onclick = () => { $('pinInput').value = ''; $('pinModal').hidden = false; setTimeout(() => $('pinInput').focus(), 100); };
 $('pinOk').onclick = () => {
   if ($('pinInput').value !== ADMIN_PIN) { toast('PIN이 맞지 않아요'); $('pinInput').value = ''; return; }
   $('pinModal').hidden = true; stopCamera(); show('admin'); loadAdmin();
@@ -537,6 +539,7 @@ const fmtTime = (iso) => { const d = new Date(iso); if (isNaN(d)) return ''; con
 const MAKEUP = { none: '맨얼굴', base: '베이스', full: '풀메이크업' };
 
 async function loadAdmin() {
+  renderBgRef();
   await flushQueue();
   const pending = ls.get(LS_QUEUE, []);
   $('admPending').hidden = !pending.length;
@@ -585,6 +588,31 @@ function renderAdmin() {
   });
 }
 $('admReload').onclick = loadAdmin;
+
+// ---------- 배경 기준 잡기 (스튜디오 조명 아래에서 한 번) ----------
+const LS_BG = 'pc_bg_ref';
+const bgRef = () => ls.get(LS_BG, null);
+function renderBgRef() {
+  const r = bgRef();
+  $('bgRefSwatch').style.background = r ? linToHex(r.rgb) : 'repeating-linear-gradient(45deg,#eee 0 6px,#fff 6px 12px)';
+  $('bgRefText').textContent = r ? `설정됨 · ${new Date(r.time).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · ${linToHex(r.rgb)}` : '아직 설정하지 않았어요';
+  $('btnBgRef').textContent = r ? '배경 기준 다시 잡기' : '배경 기준 잡기';
+}
+$('btnBgRef').onclick = () => startCamera('calib');
+async function runCalib() {
+  $('guideText').textContent = '손님이 서는 자리의 배경만 보이게 해주세요';
+  $('guideText').classList.remove('ok');
+  for (let n = 3; n >= 1; n--) { if (state !== 'camera' || !stream) return; setCount(String(n)); await sleep(1000); }
+  if (state !== 'camera' || !stream) return;
+  setCount('');
+  wctx.drawImage(video, 0, 0, work.width, work.height);
+  const id = wctx.getImageData(0, 0, work.width, work.height);
+  const rgb = centerColor(id);
+  stopCamera();
+  ls.set(LS_BG, { rgb, time: Date.now() });
+  show('admin'); renderBgRef(); loadAdmin();
+  toast('배경 기준을 저장했어요');
+}
 $('admCsv').onclick = async () => {
   if (!adminRows.length) return toast('저장할 기록이 없어요');
   const cell = (v) => { const t = String(v ?? ''); return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
